@@ -7,4 +7,10 @@ int main(void)
   {
     printf("%d\n", i);
   }
+
+  float f = 1.20001;
+  f *= 100;
+  int i = (int) f;
+
+  printf("yo %d\n", i);
 }
