@@ -5,21 +5,21 @@
 
 int main(void)
 {
-  // get and store a name from the user
-  string name = GetString();
+    // get and store a name from the user
+    string name = GetString();
 
-  // loop through the chars in name
-  for(int i = 0, n = strlen(name); i < n; i++)
-  {
-    // if we are at the first char, or if the preceeding char was a space
-    // then print the current char (as uppercase)
-    if ( i == 0 || name[i - 1] == ' ')
+    // loop through the chars in name
+    for(int i = 0, n = strlen(name); i < n; i++)
     {
-      printf("%c", toupper(name[i]));
+        // if we are at the first char, or if the preceeding char was a space
+        // then print the current char (as uppercase)
+        if ( i == 0 || name[i - 1] == ' ')
+        {
+            printf("%c", toupper(name[i]));
+        }
     }
-  }
 
-  printf("\n");
+    printf("\n");
 
-  return 0;
+    return 0;
 }
