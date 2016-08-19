@@ -1,0 +1,77 @@
+#include <cs50.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+int invalid_key(string);
+// this function would be called print_vigenere but the style50 program advised
+// that name was too long.
+void print_vig(string, string);
+
+int main(int argc, string argv[])
+{
+    // ensure the user provided a single command arg line that is a word, with
+    // all (upper or lowercase) alphabetical characters.
+    if (argc != 2 || invalid_key(argv[1]))
+    {
+        printf("Please enter a single command line argument, that is a word "
+               "with all alphabetical characters.\n");
+        return 1;
+    }
+    string key = argv[1];
+
+    // get the message to "encrypt" from the user
+    string message = GetString();
+
+    // encode and print the message
+    print_vig(message, key);
+
+    return 0;
+}
+
+int invalid_key(string key)
+{
+    // if any character is not alphabetical, return 1 as the key is invalid
+    // otherwise return 0
+    for (int i = 0, n = strlen(key); i < n; i++)
+    {
+        if (!isalpha(key[i]))
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void print_vig(string message, string key)
+{
+    int key_length = strlen(key);
+    int key_idx = 0;
+
+    // for each character in the message...
+    for (int i = 0, n = strlen(message); i < n; i++)
+    {
+        char letter = message[i];
+        if (isalpha(letter))
+        {
+            // if alphabetical, print the character plus the value associated
+            // with the cipher key letter we are at, wrapping around within the
+            // upper or lower case ascii ranges
+            int offset = (isupper(letter)) ? 65 : 97;
+            int key_value = toupper(key[key_idx]) - 65;
+            printf("%c", (letter - offset + key_value) % 26 + offset);
+
+            // then increment the cipher letter index, wrapping it back to the
+            // start index if necessary.
+            key_idx++;
+            key_idx %= key_length;
+        }
+        else
+        {
+            // otherwise print the char as provided (ie. for a space)
+            printf("%c", letter);
+        }
+    }
+    printf("\n");
+}
