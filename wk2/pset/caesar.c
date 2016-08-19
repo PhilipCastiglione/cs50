@@ -12,7 +12,8 @@ int main(int argc, string argv[])
     // a non-negative int. atoi will convert silly input to 0.
     if (argc != 2 || atoi(argv[1]) < 0)
     {
-        printf("Please enter a single command line argument, that is a non-negative integer.");
+        printf("Please enter a single command line argument, that is a "
+               "non-negative integer.\n");
         return 1;
     }
     int key = atoi(argv[1]);
@@ -30,7 +31,7 @@ int main(int argc, string argv[])
 void print_caesar(string message, int key)
 {
     // for each character in the string...
-    for(int i = 0, n = strlen(message); i < n; i++)
+    for (int i = 0, n = strlen(message); i < n; i++)
     {
         // if alphabetical, print the character plus the cipher key, wrapping
         // around within the upper or lower case ascii ranges. otherwise print
