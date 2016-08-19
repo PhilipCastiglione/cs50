@@ -13,7 +13,7 @@ int main(void)
     {
         // if we are at the first char, or if the preceeding char was a space
         // then print the current char (as uppercase)
-        if ( i == 0 || name[i - 1] == ' ')
+        if (i == 0 || name[i - 1] == ' ')
         {
             printf("%c", toupper(name[i]));
         }

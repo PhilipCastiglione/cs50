@@ -9,8 +9,8 @@ void print_vigenere(string, string);
 
 int main(int argc, string argv[])
 {
-    // ensure the user provided a single command line that is a word, with all
-    // (upper or lowercase) alphabetical characters.
+    // ensure the user provided a single command arg line that is a word, with
+    // all (upper or lowercase) alphabetical characters.
     if (argc != 2 || is_invalid_key(argv[1]))
     {
         printf("Please enter a single command line argument, that is a word "
