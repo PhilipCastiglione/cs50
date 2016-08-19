@@ -36,15 +36,15 @@ void print_caesar(string message, int key)
         // if alphabetical, print the character plus the cipher key, wrapping
         // around within the upper or lower case ascii ranges. otherwise print
         // the char as provided (ie. for a space)
-        char c = message[i];
-        if (isalpha(c))
+        char letter = message[i];
+        if (isalpha(letter))
         {
             int offset = (isupper(c))? 65 : 97;
-            printf("%c", (c - offset + key) % 26 + offset);
+            printf("%c", (letter - offset + key) % 26 + offset);
         }
         else
         {
-            printf("%c", c);
+            printf("%c", letter);
         }
     }
     printf("\n");

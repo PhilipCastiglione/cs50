@@ -51,15 +51,15 @@ void print_vigenere(string message, string key)
     // for each character in the message...
     for (int i = 0, n = strlen(message); i < n; i++)
     {
-        char c = message[i];
-        if (isalpha(c))
+        char letter = message[i];
+        if (isalpha(letter))
         {
             // if alphabetical, print the character plus the value associated
             // with the cipher key letter we are at, wrapping around within the
             // upper or lower case ascii ranges
-            int offset = (isupper(c))? 65 : 97;
+            int offset = (isupper(letter))? 65 : 97;
             int key_value = toupper(key[key_idx]) - 65;
-            printf("%c", (c - offset + key_value) % 26 + offset);
+            printf("%c", (letter - offset + key_value) % 26 + offset);
 
             // then increment the cipher letter index, wrapping it back to the
             // start index if necessary.
@@ -69,7 +69,7 @@ void print_vigenere(string message, string key)
         else
         {
             // otherwise print the char as provided (ie. for a space)
-            printf("%c", c);
+            printf("%c", letter);
         }
     }
     printf("\n");
