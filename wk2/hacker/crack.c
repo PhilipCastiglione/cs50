@@ -37,9 +37,6 @@ string cipher;
 char salt[2];
 char plaintext[8];
 
-// FOR DEBUGGING
-long long counter;
-
 int main(int argc, string argv[])
 {
     // ensure crack has the right number of args
@@ -151,7 +148,6 @@ void rotate_chars_and_test(int lower_bound, int upper_bound, string test_pw, int
 {
     for (int k = lower_bound; k < upper_bound; k++)
     {
-        printf("%lld\n", ++counter);
         if (password_matches(test_pw))
         {
             break;
