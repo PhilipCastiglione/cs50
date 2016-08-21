@@ -24,27 +24,33 @@
 
 int main(int argc, string argv[])
 {
-    // TODO: comment me
+    // ensure generate is called with 1 or 2 command line args
     if (argc != 2 && argc != 3)
     {
         printf("Usage: generate n [s]\n");
         return 1;
     }
 
-    // TODO: comment me
+    // store the number of random numbers to generate as an int
     int n = atoi(argv[1]);
 
-    // TODO: comment me
+    // if the optional 2nd arg was provided, use srand48 to generate the seed
+    // value for drand, which establishes a starting point for the pseudorandom
+    // number generation algorithm
     if (argc == 3)
     {
         srand48((long int) atoi(argv[2]));
     }
+    // otherwise, just use the current time (seconds since linux epoch) as the
+    // seed value
     else
     {
         srand48((long int) time(NULL));
     }
 
-    // TODO: comment me
+    // execute for the number of requested times stored in n, print the
+    // generated pseudorandom number multiplied by the limit, ie from 0 to
+    // limit
     for (int i = 0; i < n; i++)
     {
         printf("%i\n", (int) (drand48() * LIMIT));
