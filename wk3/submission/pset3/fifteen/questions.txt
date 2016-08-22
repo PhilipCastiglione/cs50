@@ -1,0 +1,9 @@
+questions.txt
+
+Computer Science 50
+Problem Set 3
+
+0. The game allows dimensions from 3x3 to 9x9, based on the constants defined as DIM_MIN and DIM_MAX.
+1. The game board is a 2D array of ints.
+2. The function with identifier "greet" is called to greet the player at the start.
+3. Required and unimplemented functions are: "init", "draw", "move" and "won"
