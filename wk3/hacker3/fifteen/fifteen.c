@@ -51,7 +51,7 @@ void god(void);
 int search(int winning_indices[]);
 bool position_considered(int board_positions[][DIM_MAX][DIM_MAX], int size);
 int position_cost(void);
-void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int board_positions[][DIM_MAX][DIM_MAX], int size);
+void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int size);
 void populate_valid_tiles(int tiles[], int zero_pos);
 int parent_and_brd_to_lowest_cost(bool explored[], int costs[], int board_positions[][DIM_MAX][DIM_MAX], int size);
 
@@ -341,7 +341,7 @@ int search(int winning_moves[])
     while (true)
     {
         // for the current position of the board, find possible moves
-        int zero_pos = find(0);
+        int zero_pos = find(0); // TODO: first loop through original board
         int local_tiles[4];
         populate_valid_tiles(local_tiles, zero_pos);
         
@@ -354,20 +354,21 @@ int search(int winning_moves[])
                 // pop the board into that position
                 swap(zero_pos, local_tiles[i]);
                 // check if the board position has been seen before
-                if (position_considered(board_positions, size))
+                if (position_considered(board_positions, size)) // TODO: loop through swap board
                 {
                     // just pop back if so
                     swap(zero_pos, local_tiles[i]);
                 }
                 else
                 {
+                    int cost = position_cost(); // TODO: loop through swap board
                     // check for search win
-                    if (position_cost() == 0)
+                    if (cost == 0)
                     {
                         won = size;
                     }
                     // otherwise, add the board position, its parent idx, costs and tile
-                    add_position_data(explored, tiles, local_tiles[i], costs, position_cost(), parents, parent, board_positions, size);
+                    add_position_data(explored, tiles, local_tiles[i], costs, cost, parents, parent, size);
                     size++;
                     // then swap back
                     swap(zero_pos, local_tiles[i]);
@@ -406,43 +407,51 @@ int search(int winning_moves[])
     return win_c;
 }
 
-void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int board_positions[][DIM_MAX][DIM_MAX], int size)
+void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int size)
 {
+    printf("%d\n", size);
     explored[size] = false;
     tiles[size] = tile;
     costs[size] = (parent >= 0) ? costs[parents[parent]] + cost : cost;
     costs[size] = cost;
     parents[size] = parent;
-    for (int i = 0; i < d; i++)
-    {
-        for (int j = 0; j < d; j++)
-        {
-            board_positions[size][i][j] = brd[i][j];
-        }
-    }
 }
 
 /**
- * Checks if the current board configuration has been considered previously
+ * Checks if the current board configuration has been considered previously and adds it if not
  */
 bool position_considered(int board_positions[][DIM_MAX][DIM_MAX], int size)
 {
+    // for each recorded board position
     for (int i = 0; i < size; i++)
     {
-        int matching = 1;
+        bool matching = true;
         for (int j = 0; j < d; j++)
         {
             for (int k = 0; k < d; k++)
             {
                 if (brd[j][k] != board_positions[i][j][k])
                 {
-                    matching = 0;
+                    matching = false;
+                    break; // early exit
                 }
+            }
+            if (!matching)
+            {
+              break; // early exit
             }
         }
         if (matching)
         {
             return true;
+        }
+    }
+    // add the current position to the recorded positions
+    for (int j = 0; j < d; j++)
+    {
+        for (int k = 0; k < d; k++)
+        {
+            board_positions[size][j][k] = brd[j][k];
         }
     }
     return false;
