@@ -362,13 +362,15 @@ int search(int winning_moves[])
                 else
                 {
                     int cost = position_cost(); // TODO: loop through swap board
+                    // add the board position, its parent idx, costs and tile
+                    add_position_data(explored, tiles, local_tiles[i], costs, cost, parents, parent, size);
                     // check for search win
                     if (cost == 0)
                     {
+                        printf("exiting the search\n");
                         won = size;
+                        break;
                     }
-                    // otherwise, add the board position, its parent idx, costs and tile
-                    add_position_data(explored, tiles, local_tiles[i], costs, cost, parents, parent, size);
                     size++;
                     // then swap back
                     swap(zero_pos, local_tiles[i]);
@@ -378,6 +380,7 @@ int search(int winning_moves[])
         
         if (won)
         {
+            printf("exiting the search\n");
             break;
         }
         
@@ -399,21 +402,26 @@ int search(int winning_moves[])
         win_c++;
     }
     
-    free(tiles);
-    free(costs);
-    free(parents);
-    free(explored);
-    free(board_positions);
+    // TODO:
+    //free(tiles);
+    //free(costs);
+    //free(parents);
+    //free(explored);
+    //free(board_positions);
     return win_c;
 }
 
 void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int size)
 {
     printf("%d\n", size);
+    printf("setting explored: false\n");
+    printf("setting tile: %d\n", tile);
+    printf("setting cost: %d\n", cost);
+    printf("setting parent: %d\n", parent);
     explored[size] = false;
     tiles[size] = tile;
     costs[size] = (parent >= 0) ? costs[parents[parent]] + cost : cost;
-    costs[size] = cost;
+    //costs[size] = cost; // non cumulative variant
     parents[size] = parent;
 }
 
