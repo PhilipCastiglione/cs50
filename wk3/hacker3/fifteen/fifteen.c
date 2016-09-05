@@ -23,12 +23,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 
 // constants
 #define DIM_MIN 3
 #define DIM_MAX 5
-#define PTR_MAX 1048576 // TODO: wat
-#define SEARCH_MAX 65536 // TODO: how big?
 
 // board
 int brd[DIM_MAX][DIM_MAX];
@@ -50,18 +49,11 @@ void swap(int pos_one, int pos_two);
 bool won(void);
 void god(void);
 int search(int winning_indices[]);
-//bool position_considered(int*** board_positions, int size);
-//bool position_considered(int* board_positions[][], int size);
-//bool position_considered(int board_positions[][DIM_MAX][DIM_MAX], int size);
-bool position_considered(int board_positions[], int size);
+bool position_considered(int board_positions[][DIM_MAX][DIM_MAX], int size);
 int position_cost(void);
-//void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int*** board_positions, int size);
-//void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int board_positions[][DIM_MAX][DIM_MAX], int size);
-void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int board_positions[], int size);
+void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int board_positions[][DIM_MAX][DIM_MAX], int size);
 void populate_valid_tiles(int tiles[], int zero_pos);
-//int parent_and_brd_to_lowest_cost(bool explored[], int costs[], int*** board_positions, int size);
-//int parent_and_brd_to_lowest_cost(bool explored[], int costs[], int board_positions[][DIM_MAX][DIM_MAX], int size);
-int parent_and_brd_to_lowest_cost(bool explored[], int costs[], int* board_positions, int size);
+int parent_and_brd_to_lowest_cost(bool explored[], int costs[], int board_positions[][DIM_MAX][DIM_MAX], int size);
 
 int main(int argc, string argv[])
 {
@@ -335,16 +327,11 @@ void god(void)
 int search(int winning_moves[])
 {
     printf("setting up search vars\n");
-    //int tiles[SEARCH_MAX];
-    //int costs[SEARCH_MAX];
-    //int parents[SEARCH_MAX];
-    //bool explored[SEARCH_MAX];
-    //int board_positions[SEARCH_MAX][DIM_MAX][DIM_MAX];
-    int* tiles = malloc(PTR_MAX * sizeof(int));
-    int* costs = malloc(PTR_MAX * sizeof(int));
-    int* parents = malloc(PTR_MAX * sizeof(int));
-    bool* explored = malloc(PTR_MAX * sizeof(int));
-    int* board_positions = malloc(PTR_MAX * DIM_MAX * DIM_MAX * sizeof(int));
+    int* tiles = malloc(INT_MAX * sizeof(int));
+    int* costs = malloc(INT_MAX * sizeof(int));
+    int* parents = malloc(INT_MAX * sizeof(int));
+    bool* explored = malloc(INT_MAX * sizeof(int));
+    int (*board_positions)[DIM_MAX][DIM_MAX] = malloc(INT_MAX * DIM_MAX * DIM_MAX * sizeof(int));
     
     int size = 0;
     int parent = -1;
@@ -369,7 +356,6 @@ int search(int winning_moves[])
                 // check if the board position has been seen before
                 if (position_considered(board_positions, size))
                 {
-                    //printf("board already considered\n");
                     // just pop back if so
                     swap(zero_pos, local_tiles[i]);
                 }
@@ -380,7 +366,6 @@ int search(int winning_moves[])
                     {
                         won = size;
                     }
-                    //printf("adding board position %d\n", size);
                     // otherwise, add the board position, its parent idx, costs and tile
                     add_position_data(explored, tiles, local_tiles[i], costs, position_cost(), parents, parent, board_positions, size);
                     size++;
@@ -413,28 +398,21 @@ int search(int winning_moves[])
         win_c++;
     }
     
-    // TODO: free board positions?
+    free(tiles);
+    free(costs);
+    free(parents);
+    free(explored);
+    free(board_positions);
     return win_c;
 }
 
-//void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int*** board_positions, int size)
-//void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int board_positions[][DIM_MAX][DIM_MAX], int size)
-void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int board_positions[], int size)
+void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int board_positions[][DIM_MAX][DIM_MAX], int size)
 {
-    //printf("adding position data\n");
-    //printf("tile: %d\n", tile);
-    //printf("parent: %d\n", parent);
     explored[size] = false;
     tiles[size] = tile;
     costs[size] = (parent >= 0) ? costs[parents[parent]] + cost : cost;
-    //costs[size] = (parent >= 0) ? costs[parents[parent]] * 2 + cost : cost;
-    //costs[size] = cost;
-    printf("cost: %d\n", cost);
-    //printf("size: %d\n", size);
-    //printf("costs[size]: %d\n", costs[size]);
     costs[size] = cost;
     parents[size] = parent;
-    //printf("doing board position\n");
     for (int i = 0; i < d; i++)
     {
         for (int j = 0; j < d; j++)
@@ -447,9 +425,7 @@ void add_position_data(bool explored[], int tiles[], int tile, int costs[], int 
 /**
  * Checks if the current board configuration has been considered previously
  */
-//bool position_considered(int*** board_positions, int size)
-//bool position_considered(int board_positions[][DIM_MAX][DIM_MAX], int size)
-bool position_considered(int board_positions[], int size)
+bool position_considered(int board_positions[][DIM_MAX][DIM_MAX], int size)
 {
     for (int i = 0; i < size; i++)
     {
@@ -488,7 +464,7 @@ int position_cost(void)
         {
             if (brd[i][j] != 0)
             {
-                acc += abs((brd[i][j] - 1) / d - i) + abs((brd[i][j] - 1) % d - j); // strict taxicab distance
+                acc += abs((brd[i][j] - 1) / d - i) + abs((brd[i][j] - 1) % d - j); // strict taxicab distance accumulative A*
                 //int cost = abs((brd[i][j] - 1) / d - i) + abs((brd[i][j] - 1) % d - j); // weighting on low numbers
                 //int weight = d * d - brd[i][j];
                 //acc += cost * weight;
@@ -511,12 +487,10 @@ void populate_valid_tiles(int tiles[], int zero_pos)
     tiles[3] = (j == 0) ? -1 : brd[i][j - 1]; // W
 }
 
-//int parent_and_brd_to_lowest_cost(bool explored[], int costs[], int*** board_positions, int size)
-//int parent_and_brd_to_lowest_cost(bool explored[], int costs[], int board_positions[][DIM_MAX][DIM_MAX], int size)
-int parent_and_brd_to_lowest_cost(bool explored[], int costs[], int* board_positions, int size)
+int parent_and_brd_to_lowest_cost(bool explored[], int costs[], int board_positions[][DIM_MAX][DIM_MAX], int size)
 {
     int lowest_cost_parent = -1;
-    int lowest_cost = SEARCH_MAX;
+    int lowest_cost = INT_MAX;
     
     // get indices that aren't in parents, and get their costs
     for (int i = 0; i < size; i++)
