@@ -361,17 +361,18 @@ int search(int winning_moves[])
             if (local_tiles[i] != -1)
             {
                 // pop the board into that position
-                swap(zero_pos, local_tiles[i]);
+                swap(zero_pos, find(local_tiles[i]));
                 // check if the board position has been seen before
                 if (position_considered(board_positions, size))
                 {
                     // just pop back if so
-                    swap(zero_pos, local_tiles[i]);
+                    swap(zero_pos, find(local_tiles[i]));
                 }
                 else
                 {
                     int cost = position_cost();
                     // add the tile, its parent idx, costs and set explored
+                    printf("%d%d%d%d%d%d%d%d%d\n", brd[0][0], brd[0][1], brd[0][2], brd[1][0], brd[1][1], brd[1][2], brd[2][0], brd[2][1], brd[2][2]);
                     add_position_data(explored, tiles, local_tiles[i], costs, cost, parents, parent, size);
                     // check for search win
                     if (cost == 0)
@@ -383,7 +384,7 @@ int search(int winning_moves[])
                     // increment size given that we added a new position when we checked position considered
                     size++;
                     // then swap back
-                    swap(zero_pos, local_tiles[i]);
+                    swap(zero_pos, find(local_tiles[i]));
                 }
             }
         }
@@ -422,16 +423,10 @@ int search(int winning_moves[])
 
 void add_position_data(bool explored[], int tiles[], int tile, int costs[], int cost, int parents[], int parent, int size)
 {
-    printf("size: %d\n", size);
-    printf("setting explored: false\n");
     explored[size] = false;
-    printf("setting tile: %d\n", tile);
     tiles[size] = tile;
-    printf("setting cost: %d\n", cost);
     costs[size] = (parent >= 0) ? costs[parents[parent]] + cost : cost;
-    printf("setting parent: %d\n", parent);
     parents[size] = parent;
-    printf("set position data\n");
 }
 
 /**
