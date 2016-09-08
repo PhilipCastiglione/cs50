@@ -1,23 +1,3 @@
-/**
- * fifteen.c
- *
- * Computer Science 50
- * Problem Set 3
- *
- * Implements Game of Fifteen (generalized to d x d).
- *
- * Usage: fifteen d
- *
- * whereby the board's dimensions are to be d x d,
- * where d must be in [DIM_MIN,DIM_MAX]
- *
- * Note that usleep is obsolete, but it offers more granularity than
- * sleep and is simpler to use than nanosleep; `man usleep` for more.
- */
- 
-#define _XOPEN_SOURCE 500
-
-#include <cs50.h>
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -25,22 +5,15 @@
 #include <unistd.h>
 #include <limits.h>
 
-// constants
+#define _XOPEN_SOURCE 500
 #define DIM_MIN 3
 #define DIM_MAX 5
 
-// board
-int brd[DIM_MAX][DIM_MAX];
+int validate_args(int argc, char *argv[]);
+void initialize_board(int **board, int dim);
+void set_starting_board(int **board, int dim);
+void randomize_board(int **board, int dim);
 
-// dimensions
-int d;
-
-// prototypes
-void clear(void);
-void greet(void);
-void init(void);
-void base_brd(void);
-void randomize_brd(void);
 void draw(void);
 bool move(int tile);
 int find(int tile);
@@ -57,26 +30,18 @@ int parent_and_brd_to_lowest_cost(bool explored[], int costs[], int ***board_pos
 
 int main(int argc, string argv[])
 {
-    if (argc != 2)
+    if (int code = validate_args(argc, argv))
     {
-        printf("Usage: fifteen d\n");
-        return 1;
+      return code;
     }
 
-    d = atoi(argv[1]);
-    if (d < DIM_MIN || d > DIM_MAX)
-    {
-        printf("Board must be between %i x %i and %i x %i, inclusive.\n",
-            DIM_MIN, DIM_MIN, DIM_MAX, DIM_MAX);
-        return 2;
-    }
+    int dim = atoi(argv[1]);
+    int **current_board = malloc(dim * dim * sizeof(int));
 
-    greet();
-    init();
+    initialize_board(current_board, dim);
 
     while (true)
     {
-        clear();
         draw();
 
         if (won())
@@ -104,42 +69,31 @@ int main(int argc, string argv[])
     return 0;
 }
 
-/**
- * Clears screen using ANSI escape sequences.
- */
-void clear(void)
+int validate_args(int argc, char *argv[])
 {
-    printf("\033[2J");
-    printf("\033[%d;%dH", 0, 0);
+    if (argc != 2)
+    {
+        printf("Usage: fifteen d\n");
+        return 1;
+    }
+    else if (atoi(argv[1]) < DIM_MIN || atoi(argv[1]) > DIM_MAX)
+    {
+        printf("Usage: fifteen d\n");
+        printf("d must be between %i and %i inclusive.\n", DIM_MIN, DIM_MIN);
+        return 2;
+    }
+    return 0;
 }
 
-/**
- * Greets player.
- */
-void greet(void)
+void initialize_board(int **board, int dim)
 {
-    clear();
-    printf("WELCOME TO GAME OF FIFTEEN\n");
-    usleep(400000);
+    set_starting_board(board, dim);
+    randomize_board(board, dim);
 }
 
-/**
- * Initializes the game's board with tiles numbered 1 through d*d - 1
- * (i.e., fills 2D array with values but does not actually print them).  
- */
-void init(void)
+void set_starting_board(int **board, int dim)
 {
-    base_brd();
-    randomize_brd();
-}
-
-/**
- * Initializes the game's board with tiles numbered 1 through d*d - 1
- * in reverse position.
- */
-void base_brd(void)
-{
-    int tile = d * d - 1;
+    int tile = dim * dim - 1;
     bool odd = tile % 2;
     for (int i = 0; i < d; i++)
     {
@@ -155,11 +109,7 @@ void base_brd(void)
     }
 }
 
-/**
- * Randomly moves board tiles a random number of times to create a pseudo-
- * random positition that is knowably reachable from it's starting position.
- */
-void randomize_brd(void)
+void randomize_board(int **board, int dim)
 {
     // use srand something so this is actually more random
     srand((int) time(NULL) % 32768);
