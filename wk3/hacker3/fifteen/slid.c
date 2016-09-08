@@ -13,13 +13,14 @@ int validate_args(int argc, char *argv[]);
 void initialize_board(int **board, int dim);
 void set_starting_board(int **board, int dim);
 void randomize_board(int **board, int dim);
+void run_game(int **board, int dim);
+void draw_board(int **board, int dim);
+int board_correct(int **board, int dim);
+void accept_user_move(int **board, int dim);
+int is_valid_move(int **board, int dim, int tile_idx);
 
-void draw(void);
-bool move(int tile);
 int find(int tile);
-bool neighbours(int pos_one, int pos_two);
 void swap(int pos_one, int pos_two);
-bool won(void);
 void god(void);
 int search(int winning_indices[]);
 bool position_considered(int ***board_positions, int size);
@@ -40,31 +41,7 @@ int main(int argc, string argv[])
 
     initialize_board(current_board, dim);
 
-    while (true)
-    {
-        draw();
-
-        if (won())
-        {
-            printf("ftw!\n");
-            break;
-        }
-
-        printf("Tile to move: ");
-        char* tile = GetString();
-
-        if (strcmp(tile, "GOD") == 0)
-        {
-            god();
-        }
-        else if (!move(atoi(tile)))
-        {
-            printf("\nIllegal move.\n");
-            usleep(200000);
-        }
-
-        usleep(200000);
-    }
+    run_game(current_game, dim);
 
     return 0;
 }
@@ -95,32 +72,32 @@ void set_starting_board(int **board, int dim)
 {
     int tile = dim * dim - 1;
     bool odd = tile % 2;
-    for (int i = 0; i < d; i++)
+    for (int i = 0; i < dim; i++)
     {
-        for (int j = 0; j < d; j++)
+        for (int j = 0; j < dim; j++)
         {
-            brd[i][j] = tile--;
+            board[i][j] = tile--;
         }
     }
     if (odd)
     {
-        brd[d - 1][d - 3] = 1;
-        brd[d - 1][d - 2] = 2;
+        board[dim - 1][dim - 3] = 1;
+        board[dim - 1][dim - 2] = 2;
     }
 }
 
 void randomize_board(int **board, int dim)
 {
-    // use srand something so this is actually more random
+    // TODO ADJUST IMPLEMENTATION
     srand((int) time(NULL) % 32768);
-    int move_count = rand() % (d * 10) + (d * 10);
+    int move_count = rand() % (dim * 10) + (dim * 10);
     int last_move = 0;
     for (int i = 0; i < move_count; i++)
     {
         int valid_moves[4] = { 0 };
         int zero_pos = find(0);
         int move_ctr = 0;
-        for (int j = 1; j < d * d - 1; j++)
+        for (int j = 1; j < dim * dim - 1; j++)
         {
             if (neighbours(zero_pos, find(j)) && j != last_move)
             {
@@ -133,47 +110,99 @@ void randomize_board(int **board, int dim)
     }
 }
 
-/**
- * Prints the board in its current state.
- */
-void draw(void)
+void run_game(int **board, int dim)
 {
-    char first, second, between;
-    for (int i = 0; i < d; i++)
+    while (true)
     {
-        for (int j = 0; j < d; j++)
+        draw_board(board, dim);
+
+        if (board_correct(board, dim))
         {
-            first = (brd[i][j] < 10) ? ' ' : (char) (brd[i][j] / 10 + 48);
-            second = (brd[i][j]) ? (char) (brd[i][j] % 10 + 48) : '_';
-            between = (j < d - 1) ? '|' : '\0';
-            printf(" %c%c %c", first, second, between);
+            printf("You win. Congratulations. I hope it was worth it.\n");
+            break;
+        }
+
+        accept_user_move(board, dim);
+    }
+}
+
+void draw_board(int **board, int dim)
+{
+    usleep(200000);
+    char c1, c2, sep;
+    for (int i = 0; i < dim; i++)
+    {
+        for (int j = 0; j < dim; j++)
+        {
+            c1 = (board[i][j] < 10) ? ' ' : (char) (board[i][j] / 10 + 48);
+            c2 = (board[i][j]) ? (char) (board[i][j] % 10 + 48) : '_';
+            sep = (j < dim - 1) ? '|' : '\0';
+            printf(" %c%c %c", c1, c2, sep);
         }
         printf("\n");
     }
 }
 
-/**
- * If tile borders empty space, moves tile and returns true, else
- * returns false. 
- */
-bool move(int tile)
+int board_correct(int **board, int dim)
 {
-    int tile_pos = find(tile);
-    if (tile_pos == -1 || tile == 0)
+    for (int i = 0; i < dim; i++)
     {
-        printf("someone is playing silly buggers\n");
-        return false;
+        for (int j = 0; j < dim; j++)
+        {
+            if (board[i][j] != i * dim + j + 1 && board[i][j] != 0)
+            {
+                return false;
+            }
+        }
     }
-    
-    int blank_pos = find(0);
-    
-    if (neighbours(tile_pos, blank_pos))
-    {
-        swap(tile_pos, blank_pos);
-        return true;
-    }
-    return false;
+    return true;
 }
+
+void accept_user_move(int **board, int dim)
+{
+    char *move = "";
+    do
+    {
+        printf("Tile to move: ");
+        char *input;
+        // TODO: read in move
+        int tile_idx = find(board, dim, atoi(input))
+        if (strcmp(input, "GOD") == 0)
+        {
+           god();
+        }
+        else if (is_valid_move(board, dim, tile_idx))
+        {
+            move_tile_at_idx(board, dim, tile_idx);
+            strcpy(move, input);
+        }
+        else
+        {
+           printf("Illegal move.\n");
+        }
+    }
+    while(strcmp(move, "") == 0);
+}
+
+TODO: FIND
+TODO: GOD
+TODO: move_tile_at_idx
+
+int is_valid_move(int **board, int dim, int tile_idx)
+{
+    int zero_idx = find(board, dim, 0);
+    if (tile_idx == -1 || tile_idx == zero_idx)
+    {
+      return 0;
+    }
+    return (tile_idx == zero_idx - d) || 
+           (tile_idx == zero_idx + 1 && tile_idx % d != 0) || 
+           (tile_idx == zero_idx - 1 && zero_idx % d != 0) || 
+           (tile_idx == zero_idx + d);
+}
+
+
+
 
 /**
  * Find the position (1D unwound array index) of a tile and return it, or if
@@ -194,16 +223,6 @@ int find(int tile)
     return -1;
 }
 
-/**
- * Returns true if the unwound 1D positions neighbour, else false.
- */
-bool neighbours(int pos_one, int pos_two)
-{
-    return (pos_two == pos_one - d) || 
-           (pos_two == pos_one + 1 && pos_two % d != 0) || 
-           (pos_two == pos_one - 1 && pos_one % d != 0) || 
-           (pos_two == pos_one + d);
-}
 
 /**
  * Swaps the tiles at the two unwound 1D positions.
@@ -213,25 +232,6 @@ void swap(int pos_one, int pos_two)
     int tmp = brd[pos_one / d][pos_one % d];
     brd[pos_one / d][pos_one % d] = brd[pos_two / d][pos_two % d];
     brd[pos_two / d][pos_two % d] = tmp;
-}
-
-/**
- * Returns true if game is won (i.e., board is in winning configuration), 
- * else false.
- */
-bool won(void)
-{
-    for (int i = 0; i < d; i++)
-    {
-        for (int j = 0; j < d; j++)
-        {
-            if (brd[i][j] != i * d + j + 1 && brd[i][j] != 0)
-            {
-                return false;
-            }
-        }
-    }
-    return true;
 }
 
 /**
