@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
+#include <unistd.h>
 
 #define _XOPEN_SOURCE 500
 #define DIM_MIN 3
@@ -22,21 +23,21 @@ int idx_for_tile(int **board, int dim, int tile);
 void move_tile_at_idx(int **board, int dim, int tile_idx);
 void god(int **board, int dim);
 int is_valid_move(int **board, int dim, int tile_idx);
-void malloc_arrays(int *tiles, int *costs, int *parents, int *explored, int ***checked_positions, int dim);
 void populate_move_idxs(int **board, int dim, int *move_idxs);
 void add_new_moves(int **board, int dim, int *tiles, int *costs, int *parent_idxs, int *explored, int ***checked_positions, int *local_move_idxs, int parent_idx, int *size, int *won);
-int is_new_valid_move(int **board, int dim, int move_idx, int ***checked_positions, size);
+int is_new_valid_move(int **board, int dim, int move_idx, int ***checked_positions, int size);
 int is_new_move(int **board, int dim, int move_idx, int ***checked_positions, int size);
 void add_move_to_arrays(int **board, int dim, int *tiles, int *costs, int *parent_idxs, int *explored, int ***checked_positions, int move_idx, int parent_idx, int *won, int *size);
-int board_cost(board, dim)
-void add_board_to_checked_positions(int **board, int dim, int ***checked_positions, int size)
+int board_cost(int **board, int dim);
+void add_board_to_checked_positions(int **board, int dim, int ***checked_positions, int size);
 void move_to_best_position(int **board, int dim, int *costs, int *explored, int ***checked_positions, int size, int *parent_idx);
 
-int main(int argc, string argv[])
+int main(int argc, char *argv[])
 {
-    if (int code = validate_args(argc, argv))
+    int error = validate_args(argc, argv);
+    if (error)
     {
-      return code;
+      return error;
     }
 
     int dim = atoi(argv[1]);
@@ -44,7 +45,7 @@ int main(int argc, string argv[])
 
     initialize_board(current_board, dim);
 
-    run_game(current_game, dim);
+    run_game(current_board, dim);
 
     return 0;
 }
@@ -103,7 +104,7 @@ void randomize_board(int **board, int dim)
         {
           random_index = rand() % 4;
         }
-        while (local_move_idxs[random_index] != -1)
+        while (local_move_idxs[random_index] != -1);
         move_tile_at_idx(board, dim, local_move_idxs[random_index]);
     }
 }
@@ -163,9 +164,9 @@ void accept_user_move(int **board, int dim)
     {
         printf("Tile to move: ");
         char input[4];
-        read(STDIN_FILE_END, input, 3);
+        read(STDIN_FILENO, input, 3);
         input[3] = '\0';
-        int tile_idx = idx_for_tile(board, dim, atoi(input))
+        int tile_idx = idx_for_tile(board, dim, atoi(input));
         if (strcmp(input, "GOD") == 0)
         {
            god(board, dim);
@@ -203,9 +204,22 @@ int idx_for_tile(int **board, int dim, int tile)
 void god(int **board, int dim)
 {
     // TODO: should tiles be tile idxs?
-    int* tiles, costs, parent_idxs, explored;
+    int *tiles, *costs, *parent_idxs, *explored;
     int ***checked_positions;
-    malloc_arrays(tiles, costs, parent_idxs, explored, checked_positions, dim);
+    // TODO: any nicer way/place to set up arrays?
+    tiles = malloc(LOTS * sizeof(int));
+    costs = malloc(LOTS * sizeof(int));
+    parent_idxs = malloc(LOTS * sizeof(int));
+    explored = malloc(LOTS * sizeof(int));
+    checked_positions = malloc(LOTS * dim * dim * sizeof(int*));
+    for (int i = 0; i < LOTS; i++)
+    {
+        checked_positions[i] = malloc(dim * dim * sizeof(int*));
+        for (int j = 0; j < dim; j++)
+        {
+            checked_positions[i][j] = malloc(dim * sizeof(int));
+        }
+    }
 
     int size = 0;
     int parent_idx = -1;
@@ -227,7 +241,7 @@ void god(int **board, int dim)
     while (size > 0)
     {
         printf("%d\n", tiles[size]);
-        size = parents[size];
+        size = parent_idxs[size];
     }
 }
 
@@ -235,7 +249,7 @@ void move_tile_at_idx(int **board, int dim, int tile_idx)
 {
     int zero_idx = idx_for_tile(board, dim, 0);
     int tmp = board[zero_idx / dim][zero_idx % dim];
-    board[zero_idx / d][zero_idx % dim] = board[tile_idx / dim][tile_idx % dim];
+    board[zero_idx / dim][zero_idx % dim] = board[tile_idx / dim][tile_idx % dim];
     board[tile_idx / dim][tile_idx % dim] = tmp;
 }
 
@@ -250,23 +264,6 @@ int is_valid_move(int **board, int dim, int tile_idx)
            (tile_idx == zero_idx + 1 && tile_idx % dim != 0) || // East neighbour
            (tile_idx == zero_idx + dim) || // South neighbour
            (tile_idx == zero_idx - 1 && zero_idx % dim != 0); // West neighbour
-}
-
-void malloc_arrays(int *tiles, int *costs, int *parents, int *explored, int ***checked_positions, int dim)
-{
-    tiles = malloc(LOTS * sizeof(int));
-    costs = malloc(LOTS * sizeof(int));
-    parent_idxs = malloc(LOTS * sizeof(int));
-    explored = malloc(LOTS * sizeof(int));
-    checked_positions = malloc(LOTS * dim * dim * sizeof(int*));
-    for (int i = 0; i < LOTS; i++)
-    {
-        checked_positions[i] = malloc(dim * dim * sizeof(int*));
-        for (int j = 0; j < dim; j++)
-        {
-            checked_positions[i][j] = malloc(dim * sizeof(int));
-        }
-    }
 }
 
 void populate_move_idxs(int **board, int dim, int *move_idxs)
@@ -284,14 +281,14 @@ void add_new_moves(int **board, int dim, int *tiles, int *costs, int *parent_idx
 {
     for (int i = 0; i < 4; i++)
     {
-        if (!won && is_new_valid_move(board, dim, local_move_idxs[i], checked_positions, size))
+        if (!won && is_new_valid_move(board, dim, local_move_idxs[i], checked_positions, *size))
         {
-            add_move_to_arrays(board, dim, tiles, costs, parent_idxs, explored, checked_positions, local_move_idxs[i], parent_idx, &won, &size);
+            add_move_to_arrays(board, dim, tiles, costs, parent_idxs, explored, checked_positions, local_move_idxs[i], parent_idx, won, size);
         }
     }
 }
 
-int is_new_valid_move(int **board, int dim, int move_idx, int ***checked_positions, size)
+int is_new_valid_move(int **board, int dim, int move_idx, int ***checked_positions, int size)
 {
     return is_valid_move(board, dim, local_move_idxs[i]) &&
       is_new_move(board, dim, local_move_idxs[i], checked_positions, size);
@@ -340,7 +337,7 @@ void add_move_to_arrays(int **board, int dim, int *tiles, int *costs, int *paren
     explored[size] = 0;
     int cost = board_cost(board, dim);
     costs[size] = (parent_idx >= 0) ? costs[parent_idxs[parent_idx]] + cost : cost;
-    parents_idxs[size] = parent_idx;
+    parent_idxs[size] = parent_idx;
 
     add_board_to_checked_positions(board, dim, checked_positions, size);
 
@@ -349,7 +346,7 @@ void add_move_to_arrays(int **board, int dim, int *tiles, int *costs, int *paren
     (cost == 0)? *won++ : size++ ;
 }
 
-int board_cost(board, dim)
+int board_cost(int **board, int dim)
 {
     int acc = 0;
     for (int i = 0; i < dim; i++)
