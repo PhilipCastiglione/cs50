@@ -30,6 +30,7 @@ int is_new_move(int **board, int dim, int move_idx, int ***checked_positions, in
 void add_move_to_arrays(int **board, int dim, int *tiles, int *costs, int *parent_idxs, int *explored, int ***checked_positions, int move_idx, int parent_idx, int *won, int *size);
 int board_cost(board, dim)
 void add_board_to_checked_positions(int **board, int dim, int ***checked_positions, int size)
+void move_to_best_position(int **board, int dim, int *costs, int *explored, int ***checked_positions, int size, int *parent_idx);
 
 int main(int argc, string argv[])
 {
@@ -217,7 +218,7 @@ void god(int **board, int dim)
 
         add_new_moves(board, dim, tiles, costs, parent_idxs, explored, checked_positions, local_move_idxs, parent_idx, &size, &won);
 
-        // TODO: find lowest cost, set parent idx and move board to new position
+        move_to_best_position(board, dim, costs, explored, checked_positions, size, &parent_idx);
     }
 
     // TODO: change printing the won stuff to returning/setting/doing whatever
@@ -374,6 +375,34 @@ void add_board_to_checked_positions(int **board, int dim, int ***checked_positio
     }
 }
 
+void move_to_best_position(int **board, int dim, int *costs, int *explored, int ***checked_positions, int size, int *parent_idx)
+{
+    int lowest_cost_parent = -1;
+    int lowest_cost = INT_MAX;
+    
+    for (int i = 0; i < size; i++)
+    {
+        if (!explored[i])
+        {
+            if (costs[i] < lowest_cost)
+            {
+                lowest_cost_parent = i;
+                lowest_cost = costs[i];
+            }
+        }
+    }
+    
+    for (int i = 0; i < dim; i++)
+    {
+        for (int j = 0; j < dim; j++)
+        {
+            board[i][j] = checked_positions[lowest_cost_parent][i][j];
+        }
+    }
+    
+    explored[lowest_cost_parent] = true;
+    *parent_idx = lowest_cost_parent;
+}
 
 
 
