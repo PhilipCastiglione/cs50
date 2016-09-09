@@ -8,6 +8,7 @@
 #define _XOPEN_SOURCE 500
 #define DIM_MIN 3
 #define DIM_MAX 5
+#define LOTS 65536
 
 int validate_args(int argc, char *argv[]);
 void initialize_board(int **board, int dim);
@@ -17,9 +18,14 @@ void run_game(int **board, int dim);
 void draw_board(int **board, int dim);
 int board_correct(int **board, int dim);
 void accept_user_move(int **board, int dim);
+int find(int **board, int dim, int tile);
+void move_tile_at_idx(int **board, int dim, int tile_idx);
+void god(int **board, int dim);
 int is_valid_move(int **board, int dim, int tile_idx);
+void malloc_arrays(int *tiles, int *costs, int *parents, int *explored, int ***board_positions, int dim);
+void add_new_moves(int **board, int dim, int *tiles, int *costs, int *parent_idxs, int *explored, int ***board_positions, int *local_move_idxs, int *size, int *won);
+int is_new_valid_move(int **board, int dim, int move_idx, int ***board_positions, size);
 
-int find(int tile);
 void swap(int pos_one, int pos_two);
 void god(void);
 int search(int winning_indices[]);
@@ -169,7 +175,9 @@ void accept_user_move(int **board, int dim)
         int tile_idx = find(board, dim, atoi(input))
         if (strcmp(input, "GOD") == 0)
         {
-           god();
+           god(board, dim);
+           // TODO: first, just print the moves, later refactor to make them and break
+           // break;
         }
         else if (is_valid_move(board, dim, tile_idx))
         {
@@ -184,9 +192,50 @@ void accept_user_move(int **board, int dim)
     while(strcmp(move, "") == 0);
 }
 
-TODO: FIND
-TODO: GOD
-TODO: move_tile_at_idx
+int find(int **board, int dim, int tile)
+{
+    for (int i = 0; i < dim; i++)
+    {
+        for (int j = 0; j < dim; j++)
+        {
+            if (board[i][j] == tile)
+            {
+                return i * dim + j;
+            }
+        }
+    }
+    return -1;
+}
+
+void god(int **board, int dim)
+{
+    int* tiles, costs, parent_idxs, explored;
+    int ***board_positions;
+    malloc_arrays(tiles, costs, parent_idxs, explored, board_positions, dim);
+
+    int size = 0;
+    int parent_idx = -1;
+    int won = 0;
+
+    while (!won)
+    {
+        int *local_move_idxs = malloc(4 * sizeof(int));
+
+        populate_move_idxs(board, dim, local_move_idxs);
+
+        add_new_moves(board, dim, tiles, costs, parent_idxs, explored, board_positions, local_move_idxs, &size, &won);
+    }
+
+    // TODO: print the won stuff
+}
+
+void move_tile_at_idx(int **board, int dim, int tile_idx)
+{
+    int zero_idx = find(board, dim, 0);
+    int tmp = board[zero_idx / dim][zero_idx % dim];
+    board[zero_idx / d][zero_idx % dim] = board[tile_idx / dim][tile_idx % dim];
+    board[tile_idx / dim][tile_idx % dim] = tmp;
+}
 
 int is_valid_move(int **board, int dim, int tile_idx)
 {
@@ -201,38 +250,50 @@ int is_valid_move(int **board, int dim, int tile_idx)
            (tile_idx == zero_idx + d);
 }
 
-
-
-
-/**
- * Find the position (1D unwound array index) of a tile and return it, or if
- * the tile is not present, return -1.
- */
-int find(int tile)
+void malloc_arrays(int *tiles, int *costs, int *parents, int *explored, int ***board_positions, int dim)
 {
-    for (int i = 0; i < d; i++)
+    *tiles = malloc(LOTS * sizeof(int));
+    *costs = malloc(LOTS * sizeof(int));
+    *parent_idxs = malloc(LOTS * sizeof(int));
+    *explored = malloc(LOTS * sizeof(int));
+    ***board_positions = malloc(LOTS * dim * dim * sizeof(int*));
+    for (int i = 0; i < LOTS; i++)
     {
-        for (int j = 0; j < d; j++)
+        board_positions[i] = malloc(dim * dim * sizeof(int*));
+        for (int j = 0; j < dim; j++)
         {
-            if (brd[i][j] == tile)
-            {
-                return i * d + j;
-            }
+            board_positions[i][j] = malloc(dim * sizeof(int));
         }
     }
-    return -1;
 }
 
+// TODO: populate_move_idxs
 
-/**
- * Swaps the tiles at the two unwound 1D positions.
- */
-void swap(int pos_one, int pos_two)
+void add_new_moves(int **board, int dim, int *tiles, int *costs, int *parent_idxs, int *explored, int ***board_positions, int *local_move_idxs, int *size, int *won)
 {
-    int tmp = brd[pos_one / d][pos_one % d];
-    brd[pos_one / d][pos_one % d] = brd[pos_two / d][pos_two % d];
-    brd[pos_two / d][pos_two % d] = tmp;
+    for (int i = 0; i < 4; i++)
+    {
+        if (!won && is_new_valid_move(board, dim, local_move_idxs[i], board_positions, size))
+        {
+            add_move_to_arrays(board, dim, tiles, costs, parent_idxs, explored, board_positions, local_move_idxs, &won, &size);
+        }
+    }
 }
+
+int is_new_valid_move(int **board, int dim, int move_idx, int ***board_positions, size)
+{
+    return is_valid_move(board, dim, local_move_idxs[i]) &&
+      !is_position_for_move_idx_checked(board, dim, local_move_idxs[i], board_positions, size);
+}
+
+// TODO: is_position_for_move_idx_checked
+
+
+// TODO add_move_to_arrays(board, dim, tiles, costs, parent_idxs, explored, board_positions, local_move_idxs, &won, &size);
+
+
+
+
 
 /**
  * ok so the N-puzzle conveniently provides a taxicab distance sum heuristic
