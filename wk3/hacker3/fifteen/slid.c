@@ -16,13 +16,14 @@ void set_starting_board(int **board, int dim);
 void randomize_board(int **board, int dim);
 void run_game(int **board, int dim);
 void draw_board(int **board, int dim);
-int board_correct(int **board, int dim);
+int is_board_correct(int **board, int dim);
 void accept_user_move(int **board, int dim);
 int find(int **board, int dim, int tile);
 void move_tile_at_idx(int **board, int dim, int tile_idx);
 void god(int **board, int dim);
 int is_valid_move(int **board, int dim, int tile_idx);
 void malloc_arrays(int *tiles, int *costs, int *parents, int *explored, int ***board_positions, int dim);
+void populate_move_idxs(int **board, int dim, int *move_idxs);
 void add_new_moves(int **board, int dim, int *tiles, int *costs, int *parent_idxs, int *explored, int ***board_positions, int *local_move_idxs, int *size, int *won);
 int is_new_valid_move(int **board, int dim, int move_idx, int ***board_positions, size);
 
@@ -94,25 +95,20 @@ void set_starting_board(int **board, int dim)
 
 void randomize_board(int **board, int dim)
 {
-    // TODO ADJUST IMPLEMENTATION
     srand((int) time(NULL) % 32768);
     int move_count = rand() % (dim * 10) + (dim * 10);
-    int last_move = 0;
     for (int i = 0; i < move_count; i++)
     {
-        int valid_moves[4] = { 0 };
-        int zero_pos = find(0);
-        int move_ctr = 0;
-        for (int j = 1; j < dim * dim - 1; j++)
+        int *local_move_idxs = malloc(4 * sizeof(int));
+        populate_move_idxs(board, dim, local_move_idxs);
+
+        int random_index;
+        do
         {
-            if (neighbours(zero_pos, find(j)) && j != last_move)
-            {
-                valid_moves[move_ctr] = j;
-                move_ctr++;
-            }
+          random_index = rand() % 4;
         }
-        last_move = valid_moves[rand() % move_ctr];
-        move(last_move);
+        while (local_move_idxs[random_index] != -1)
+        move_tile_at_idx(board, dim, local_move_idxs[random_index]);
     }
 }
 
@@ -122,7 +118,7 @@ void run_game(int **board, int dim)
     {
         draw_board(board, dim);
 
-        if (board_correct(board, dim))
+        if (is_board_correct(board, dim))
         {
             printf("You win. Congratulations. I hope it was worth it.\n");
             break;
@@ -149,7 +145,7 @@ void draw_board(int **board, int dim)
     }
 }
 
-int board_correct(int **board, int dim)
+int is_board_correct(int **board, int dim)
 {
     for (int i = 0; i < dim; i++)
     {
@@ -226,7 +222,13 @@ void god(int **board, int dim)
         add_new_moves(board, dim, tiles, costs, parent_idxs, explored, board_positions, local_move_idxs, &size, &won);
     }
 
-    // TODO: print the won stuff
+    printf("winning moves, in reverse order!\n");
+    // TODO: change printing the won stuff to returning/setting/doing whatever
+    while (size > 0)
+    {
+        printf("%d\n", tiles[size]);
+        size = parents[size];
+    }
 }
 
 void move_tile_at_idx(int **board, int dim, int tile_idx)
@@ -244,10 +246,10 @@ int is_valid_move(int **board, int dim, int tile_idx)
     {
       return 0;
     }
-    return (tile_idx == zero_idx - d) || 
-           (tile_idx == zero_idx + 1 && tile_idx % d != 0) || 
-           (tile_idx == zero_idx - 1 && zero_idx % d != 0) || 
-           (tile_idx == zero_idx + d);
+    return (tile_idx == zero_idx - dim) || // North neighbour
+           (tile_idx == zero_idx + 1 && tile_idx % dim != 0) || // East neighbour
+           (tile_idx == zero_idx + dim) || // South neighbour
+           (tile_idx == zero_idx - 1 && zero_idx % dim != 0); // West neighbour
 }
 
 void malloc_arrays(int *tiles, int *costs, int *parents, int *explored, int ***board_positions, int dim)
@@ -267,7 +269,16 @@ void malloc_arrays(int *tiles, int *costs, int *parents, int *explored, int ***b
     }
 }
 
-// TODO: populate_move_idxs
+void populate_move_idxs(int **board, int dim, int *move_idxs)
+{
+    int zero_idx = find(board, dim, 0);
+    int i = zero_idx / dim;
+    int j = zero_idx % dim;
+    move_idxs[0] = (i == 0) ? -1 : zero_idx - dim; // North idx
+    move_idxs[1] = (j == dim - 1) ? -1 : zero_idx + 1; // East idx
+    move_idxs[2] = (i == dim - 1) ? -1 : zero_idx + dim; // South idx
+    move_idxs[3] = (j == 0) ? -1 : zero_idx - 1; // West idx
+}
 
 void add_new_moves(int **board, int dim, int *tiles, int *costs, int *parent_idxs, int *explored, int ***board_positions, int *local_move_idxs, int *size, int *won)
 {
