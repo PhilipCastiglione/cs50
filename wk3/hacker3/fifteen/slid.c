@@ -167,11 +167,17 @@ void accept_user_move(int **board, int dim)
     char *move = "";
     do
     {
-        printf("Tile to move: ");
-        char input[4];
-        read(STDIN_FILENO, input, 3);
-        input[3] = '\0';
+        char input[10];
+
+        printf("Tile to move: \n");
+        scanf("%s", input);
+        printf("Input is: \n");
+
+        printf("input: %s\n", input);
+        printf("input as int: %d\n", atoi(input));
+
         int tile_idx = idx_for_tile(board, dim, atoi(input));
+        printf("tile_idx: %d\n", tile_idx);
         if (strcmp(input, "GOD") == 0)
         {
            god(board, dim);
