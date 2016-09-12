@@ -133,7 +133,7 @@ void run_game(int **board, int dim)
 
 void draw_board(int **board, int dim)
 {
-    usleep(200000);
+    usleep(400000);
     char c1, c2, sep;
     for (int i = 0; i < dim; i++)
     {
@@ -177,8 +177,7 @@ void accept_user_move(int **board, int dim)
         if (strcmp(input, "GOD") == 0)
         {
             god(board, dim);
-            // TODO: first, just print the moves, later refactor to make them and break
-            // break;
+            break;
         }
         else if (is_valid_move(board, dim, tile_idx))
         {
@@ -215,6 +214,8 @@ int tile_for_idx(int **board, int dim, int idx)
 
 void god(int **board, int dim)
 {
+    printf("ALMIGHTY GOD has to think for a little bit...\n");
+
     // TODO: should tiles be tile idxs?
     int *tiles, *costs, *parent_idxs, *explored;
     int ***checked_positions;
@@ -261,13 +262,23 @@ void god(int **board, int dim)
 
     retrieve_board_position(board, starting_board, dim);
 
-    // TODO: change printing the won stuff to returning/setting/doing whatever
-    printf("winning moves, in reverse order!\n");
+    // TODO: refactor or something
+    int winning_moves[4096]; // TODO: fix
+    int moves_c = 0;
     while (size > 0)
     {
-        printf("%d\n", tiles[size]);
+        winning_moves[moves_c] = tiles[size];
+
+        moves_c++;
         size = parent_idxs[size];
     }
+
+    for (int i = moves_c - 1; i >= 0; i--)
+    {
+        draw_board(board, dim);
+        move_tile_at_idx(board, dim, idx_for_tile(board, dim, winning_moves[i]));
+    }
+    draw_board(board, dim);
 }
 
 void move_tile_at_idx(int **board, int dim, int tile_idx)
