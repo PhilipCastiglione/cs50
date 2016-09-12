@@ -9,7 +9,7 @@
 #define _XOPEN_SOURCE 500
 #define DIM_MIN 3
 #define DIM_MAX 5
-#define LOTS 65536
+#define LOTS 2097152
 
 int validate_args(int argc, char *argv[]);
 void initialize_board(int **board, int dim);
@@ -383,14 +383,16 @@ int is_new_move(int **board, int dim, int move_idx, int ***checked_positions, in
 
 void add_move_to_arrays(int **board, int dim, int *tile_idxs, int *costs, int *parent_idxs, int *explored, int ***checked_positions, int move_idx, int parent_idx, int *won, int *size)
 {
-
     int zero_idx = idx_for_tile(board, dim, 0);
     move_tile_at_idx(board, dim, move_idx);
 
     tile_idxs[*size] = move_idx;
     explored[*size] = 0;
     int cost = board_cost(board, dim);
-    costs[*size] = (parent_idx >= 0) ? costs[parent_idxs[parent_idx]] + cost : cost;
+    // cumulative position cost
+    // costs[*size] = (parent_idx >= 0) ? costs[parent_idxs[parent_idx]] + cost : cost;
+    // direct position cost
+    costs[*size] = cost;
     parent_idxs[*size] = parent_idx;
 
     add_board_to_checked_positions(board, dim, checked_positions, *size);
