@@ -164,25 +164,21 @@ int is_board_correct(int **board, int dim)
 
 void accept_user_move(int **board, int dim)
 {
-    char *move = "";
+    char *move = malloc(10 * sizeof(char));
     do
     {
         char input[10];
 
         printf("Tile to move: \n");
         scanf("%s", input);
-        printf("Input is: \n");
-
-        printf("input: %s\n", input);
-        printf("input as int: %d\n", atoi(input));
 
         int tile_idx = idx_for_tile(board, dim, atoi(input));
-        printf("tile_idx: %d\n", tile_idx);
         if (strcmp(input, "GOD") == 0)
         {
-           god(board, dim);
-           // TODO: first, just print the moves, later refactor to make them and break
-           // break;
+            printf("doin the GOD thing\n");
+            god(board, dim);
+            // TODO: first, just print the moves, later refactor to make them and break
+            // break;
         }
         else if (is_valid_move(board, dim, tile_idx))
         {
