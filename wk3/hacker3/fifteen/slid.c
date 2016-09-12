@@ -17,6 +17,7 @@ void set_starting_board(int **board, int dim);
 void randomize_board(int **board, int dim);
 void run_game(int **board, int dim);
 void draw_board(int **board, int dim);
+void clear_screen(void);
 int is_board_correct(int **board, int dim);
 void accept_user_move(int **board, int dim);
 int idx_for_tile(int **board, int dim, int tile);
@@ -26,10 +27,10 @@ void god(int **board, int dim);
 int is_valid_move(int **board, int dim, int tile_idx);
 void populate_move_idxs(int **board, int dim, int *move_idxs);
 void retrieve_board_position(int **board, int **starting_board, int dim);
-void add_new_moves(int **board, int dim, int *tiles, int *costs, int *parent_idxs, int *explored, int ***checked_positions, int *local_move_idxs, int parent_idx, int *size, int *won);
+void add_new_moves(int **board, int dim, int *tile_idxs, int *costs, int *parent_idxs, int *explored, int ***checked_positions, int *local_move_idxs, int parent_idx, int *size, int *won);
 int is_new_valid_move(int **board, int dim, int move_idx, int ***checked_positions, int size);
 int is_new_move(int **board, int dim, int move_idx, int ***checked_positions, int size);
-void add_move_to_arrays(int **board, int dim, int *tiles, int *costs, int *parent_idxs, int *explored, int ***checked_positions, int move_idx, int parent_idx, int *won, int *size);
+void add_move_to_arrays(int **board, int dim, int *tile_idxs, int *costs, int *parent_idxs, int *explored, int ***checked_positions, int move_idx, int parent_idx, int *won, int *size);
 int board_cost(int **board, int dim);
 void add_board_to_checked_positions(int **board, int dim, int ***checked_positions, int size);
 void move_to_best_position(int **board, int dim, int *costs, int *explored, int ***checked_positions, int size, int *parent_idx);
@@ -99,7 +100,7 @@ void set_starting_board(int **board, int dim)
 void randomize_board(int **board, int dim)
 {
     srand((int) time(NULL) % 32768);
-    int move_count = rand() % (dim * 10) + (dim * 10);
+    int move_count = rand() % (dim * 10) * (dim * 10);
     for (int i = 0; i < move_count; i++)
     {
         int *local_move_idxs = malloc(4 * sizeof(int));
@@ -134,6 +135,7 @@ void run_game(int **board, int dim)
 void draw_board(int **board, int dim)
 {
     usleep(400000);
+    clear_screen();
     char c1, c2, sep;
     for (int i = 0; i < dim; i++)
     {
@@ -146,6 +148,12 @@ void draw_board(int **board, int dim)
         }
         printf("\n");
     }
+}
+
+void clear_screen(void)
+{
+    printf("\033[2J");
+    printf("\033[%d;%dH", 0, 0);
 }
 
 int is_board_correct(int **board, int dim)
@@ -216,11 +224,10 @@ void god(int **board, int dim)
 {
     printf("ALMIGHTY GOD has to think for a little bit...\n");
 
-    // TODO: should tiles be tile idxs?
-    int *tiles, *costs, *parent_idxs, *explored;
+    int *tile_idxs, *costs, *parent_idxs, *explored;
     int ***checked_positions;
     // TODO: any nicer way/place to set up arrays?
-    tiles = malloc(LOTS * sizeof(int));
+    tile_idxs = malloc(LOTS * sizeof(int));
     costs = malloc(LOTS * sizeof(int));
     parent_idxs = malloc(LOTS * sizeof(int));
     explored = malloc(LOTS * sizeof(int));
@@ -255,7 +262,7 @@ void god(int **board, int dim)
 
         populate_move_idxs(board, dim, local_move_idxs);
 
-        add_new_moves(board, dim, tiles, costs, parent_idxs, explored, checked_positions, local_move_idxs, parent_idx, &size, &won);
+        add_new_moves(board, dim, tile_idxs, costs, parent_idxs, explored, checked_positions, local_move_idxs, parent_idx, &size, &won);
 
         move_to_best_position(board, dim, costs, explored, checked_positions, size, &parent_idx);
     }
@@ -263,11 +270,11 @@ void god(int **board, int dim)
     retrieve_board_position(board, starting_board, dim);
 
     // TODO: refactor or something
-    int winning_moves[4096]; // TODO: fix
+    int winning_move_idxs[4096]; // TODO: fix
     int moves_c = 0;
     while (size > 0)
     {
-        winning_moves[moves_c] = tiles[size];
+        winning_move_idxs[moves_c] = tile_idxs[size];
 
         moves_c++;
         size = parent_idxs[size];
@@ -276,7 +283,7 @@ void god(int **board, int dim)
     for (int i = moves_c - 1; i >= 0; i--)
     {
         draw_board(board, dim);
-        move_tile_at_idx(board, dim, idx_for_tile(board, dim, winning_moves[i]));
+        move_tile_at_idx(board, dim, winning_move_idxs[i]);
     }
     draw_board(board, dim);
 }
@@ -324,13 +331,13 @@ void retrieve_board_position(int **board, int **starting_board, int dim)
     }
 }
 
-void add_new_moves(int **board, int dim, int *tiles, int *costs, int *parent_idxs, int *explored, int ***checked_positions, int *local_move_idxs, int parent_idx, int *size, int *won)
+void add_new_moves(int **board, int dim, int *tile_idxs, int *costs, int *parent_idxs, int *explored, int ***checked_positions, int *local_move_idxs, int parent_idx, int *size, int *won)
 {
     for (int i = 0; i < 4; i++)
     {
         if (!*won && is_new_valid_move(board, dim, local_move_idxs[i], checked_positions, *size))
         {
-            add_move_to_arrays(board, dim, tiles, costs, parent_idxs, explored, checked_positions, local_move_idxs[i], parent_idx, won, size);
+            add_move_to_arrays(board, dim, tile_idxs, costs, parent_idxs, explored, checked_positions, local_move_idxs[i], parent_idx, won, size);
         }
     }
 }
@@ -374,13 +381,13 @@ int is_new_move(int **board, int dim, int move_idx, int ***checked_positions, in
 }
 
 
-void add_move_to_arrays(int **board, int dim, int *tiles, int *costs, int *parent_idxs, int *explored, int ***checked_positions, int move_idx, int parent_idx, int *won, int *size)
+void add_move_to_arrays(int **board, int dim, int *tile_idxs, int *costs, int *parent_idxs, int *explored, int ***checked_positions, int move_idx, int parent_idx, int *won, int *size)
 {
-    tiles[*size] = tile_for_idx(board, dim, move_idx);
 
     int zero_idx = idx_for_tile(board, dim, 0);
     move_tile_at_idx(board, dim, move_idx);
 
+    tile_idxs[*size] = move_idx;
     explored[*size] = 0;
     int cost = board_cost(board, dim);
     costs[*size] = (parent_idx >= 0) ? costs[parent_idxs[parent_idx]] + cost : cost;
