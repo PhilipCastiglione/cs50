@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     }
 
     int dim = atoi(argv[1]);
-    int **current_board = malloc(dim * dim * sizeof(int*));
+    int **current_board = malloc(dim * sizeof(int*));
     for (int i = 0; i < dim; i++)
     {
         current_board[i] = malloc(dim * sizeof(int));
@@ -230,10 +230,10 @@ void god(int **board, int dim)
     costs = malloc(LOTS * sizeof(int));
     parent_idxs = malloc(LOTS * sizeof(int));
     explored = malloc(LOTS * sizeof(int));
-    checked_positions = malloc(LOTS * dim * dim * sizeof(int*));
+    checked_positions = malloc(LOTS * sizeof(int*));
     for (int i = 0; i < LOTS; i++)
     {
-        checked_positions[i] = malloc(dim * dim * sizeof(int*));
+        checked_positions[i] = malloc(dim * sizeof(int*));
         for (int j = 0; j < dim; j++)
         {
             checked_positions[i][j] = malloc(dim * sizeof(int));
@@ -241,7 +241,7 @@ void god(int **board, int dim)
     }
 
     // TODO: any nicer way/place to set up arrays?
-    int **starting_board = malloc(dim * dim * sizeof(int*));
+    int **starting_board = malloc(dim * sizeof(int*));
     for (int i = 0; i < dim; i++)
     {
         starting_board[i] = malloc(dim * sizeof(int*));
