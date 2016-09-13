@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
-#include <unistd.h>
 
 #define _XOPEN_SOURCE 500
 #define DIM_MIN 3
