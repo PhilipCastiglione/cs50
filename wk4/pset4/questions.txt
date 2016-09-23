@@ -1,0 +1,91 @@
+0. How many different colors does each format support?
+BMP - 32-bit per pixel (32bpp) format supports 4,294,967,296 distinct colors
+(ie. rgba)
+GIF -  256 different colors chosen from the 24-bit RGB color space PER FRAME
+JPEG - 16,777,216 colours ie. 24 bit RGB
+PNG -  32-bit RGBA colors ie. 4.3 bn
+
+1. Which of the formats supports animation?
+Only the GIF
+
+2. What’s the difference between lossy and lossless compression?
+Lossy compression degrades quality as filespace is preserved. Lossless
+compression algorithms preserve space, but do not alter the image quality.
+
+3. Which of these formats is lossy-compressed?
+Only the JPEG. But, note that even though PNG has been designed as a lossless
+format, PNG encoders can pre-process image data in a lossy fashion (so as to
+reduce colors used) to improve PNG compression.
+
+4.  What happens, technically speaking, when a file is deleted on a FAT file system?
+a) the filenames's first character in the file system directory is modified to
+indicate to the operating system that it should consider the file erased, and
+b) the memory clusters containing the files information are (or their addresses
+are) moved to the "free" list, so that they might be written over by the file
+system at some point
+
+5.  What can someone like you do to ensure (with high probability) that files you delete cannot be recovered?
+Physically destroy the hard drive, or, use a tool to significantly and
+repeatedly overwrite the whole drive, or at least portions that contained
+private data previously.
+
+6.  What’s stdint.h?
+The header file for a library that provides fixed width integer types. This
+ensures that the code will portably produce the right bytecode on any system,
+by fixing the size of the pixel numbers (ints) in relation to memory size
+independent of os or machine architecture.
+
+7.  What’s the point of using uint8_t, uint32_t, int32_t, and uint16_t in a program?
+Well, I guess I went overboard with the previous answer then. Portability,
+basically. Particularly important when conforming to a standard (ie. BMP file
+format in this case).
+
+8.  How many bytes is a BYTE, a DWORD, a LONG, and a WORD, respectively?
+BYTE, DWORD, LONG and WORD are aliases for uint8_t, uint32_t, int32_t and
+uint16_t. These correspond to 1, 4, 4, and 2 bytes respectively.
+
+9.  What (in ASCII, decimal, or hexadecimal) must the first two bytes of any BMP file be? (Leading bytes used to identify file formats (with high probability) are generally called "magic numbers.)"
+BM in ascii, which is 66 77 (decimal) or 0x42 0x4D (hex).
+
+10. What’s the difference between bfSize and biSize?
+bfSize is the size (bytes) of the bmp file. biSize is the size of the header
+structure itself (54 bytes). bfSize - biSize would be the size of the image
+excluding the headers.
+
+11. What does it mean if biHeight is negative?
+That the file is "top down", ie that the top row of recorded pixel values
+relates to the visible top row of pixels in the image. Apparently top down bmp
+images can't be compressed (that should be useful next trivia night!)
+
+12. What field in BITMAPINFOHEADER specifies the BMP’s color depth (i.e., bits per pixel)?
+The biBitCount specifies the number of bits per pixel and therefore colour
+depth.
+
+13. Why might fopen return NULL in copy.c:37?
+If the string provided does not match an available file for opening then the
+fopen function will return NULL. For example, there might be no file with that
+name in the present working directory.
+
+14. Why is the third argument to fread always 1 in our code?
+fread takes a pointer, and a number of elements of a given size, from a stream.
+The code assumes a single element of a given size in each case that the
+function is used.
+
+15. What value does copy.c:70 assign padding if bi.biWidth is 3?
+int padding =  (4 - (bi.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
+so if bi.biWidth is 3, we have
+(4 - (3 * sizeof(RGBTRIPLE)) % 4) % 4
+given that sizeof(RGBTRIPLE) is a packed struct of 3 BYTES, which are each
+one byte, it should equal 3 * 1
+(4 - (3 * 3) % 4) % 4 will evaluate to 3, and assign to padding
+
+16. What does fseek do?
+fseek sets the indicator that identifies where we are within a particular file
+stream, using an offset from a starting point.
+
+17. What is SEEK_CUR?
+SEEK_CUR is a macro referring to the current position within the file stream,
+used as a starting point for the offset calculation by fseek.
+
+18. Whodunit?
+Er, Rick Astley I guess!
