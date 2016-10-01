@@ -36,7 +36,12 @@ int main(int argc, char* argv[])
     
     int padding = (4 - (bi_header.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
     
-    int new_width = (int) (floor(bi_header.biWidth * factor) || 1) * sizeof(RGBTRIPLE);
+    int floored_width = (int) floor(bi_header.biWidth * factor);
+    if (floored_width == 0)
+    {
+      floored_width = 1;
+    }
+    int new_width = floored_width * sizeof(RGBTRIPLE);
     int new_padding = (4 - new_width % 4) % 4;
     
     RGBTRIPLE original_bmp[bi_header.biSizeImage / 3];
@@ -114,8 +119,20 @@ FILE* fopen_safely(char* path, char* mode)
  */
 void adj_headers(BFHEADER* bf_header, BIHEADER* bi_header, double factor, int padding, int new_padding)
 {
-    bi_header->biWidth = (int) floor(bi_header->biWidth * factor) || 1;
-    bi_header->biHeight = (int) floor(bi_header->biHeight * factor) || 1;
+    printf("old width: %d\n", bi_header->biWidth);
+    printf("old height: %d\n", bi_header->biHeight);
+    bi_header->biWidth = (int) floor(bi_header->biWidth * factor);
+    bi_header->biHeight = (int) ceil(bi_header->biHeight * factor);
+    if (bi_header->biWidth == 0)
+    {
+        bi_header->biWidth = 1;
+    }
+    if (bi_header->biHeight == 0)
+    {
+        bi_header->biHeight = 1;
+    }
+    printf("new width: %d\n", bi_header->biWidth);
+    printf("new height: %d\n", bi_header->biHeight);
     bf_header->bfSize = 54 + (bi_header->biWidth * 3 + new_padding) * abs(bi_header->biHeight);
     bi_header->biSizeImage = bf_header->bfSize - 54;
 }
@@ -138,7 +155,7 @@ void populate_original_bmp(RGBTRIPLE original_bmp[], BIHEADER* bi_header, FILE* 
 /**
  * Produce an outfile reduced by the factor.
  */
-void create_reduced(RGBTRIPLE original_bmp[], FILE* outptr, BIHEADER* bi_header, int new_padding, double factor)
+void create_reduced(RGBTRIPLE original_bmp[], FILE* outptr, BIHEADER* bi_header, int padding, double factor)
 {
     int inverse_factor = (int) floor(1.0 / factor);
     for (int i = 0, biHeight = abs(bi_header->biHeight); i < biHeight; i++)
@@ -147,6 +164,10 @@ void create_reduced(RGBTRIPLE original_bmp[], FILE* outptr, BIHEADER* bi_header,
         {
             printf("new pixel position: %d, %d\n", i, j);
             printf("this pixel will be the average of:\n");
+            int red = 0;
+            int green = 0;
+            int blue = 0;
+            int n = 0;
             for (int k = 0; k < inverse_factor; k++)
             {
                 for (int l = 0; l < inverse_factor; l++)
@@ -154,6 +175,10 @@ void create_reduced(RGBTRIPLE original_bmp[], FILE* outptr, BIHEADER* bi_header,
                     int row = i * inverse_factor + k;
                     int col = j * inverse_factor + l;
                     int pos = row * inverse_factor * bi_header->biWidth + col;
+                    red += original_bmp[pos].rgbtRed;
+                    green += original_bmp[pos].rgbtGreen;
+                    blue += original_bmp[pos].rgbtBlue;
+                    n++;
                     printf("old pixel position: %d, %d, %d", row, col, pos);
                     printf(" RGB %d ", original_bmp[pos].rgbtRed);
                     printf("%d ", original_bmp[pos].rgbtGreen);
@@ -161,8 +186,20 @@ void create_reduced(RGBTRIPLE original_bmp[], FILE* outptr, BIHEADER* bi_header,
                     printf("\n");
                 }
             }
+            RGBTRIPLE triple;
+            triple.rgbtRed = red/n;
+            triple.rgbtGreen = green/n;
+            triple.rgbtBlue = blue/n;
+            printf("red: %d\n", triple.rgbtRed);
+            printf("green: %d\n", triple.rgbtGreen);
+            printf("blue: %d\n", triple.rgbtBlue);
+            fwrite(&triple, sizeof(RGBTRIPLE), 1, outptr);
+        }
+        for (int k = 0; k < padding; k++)
+        {
+            fputc(0x00, outptr);
         }
     }
 }
 
-// bug: when rounding up, we try to get too much information
+// bug: some kind of numerical error (ob1)?
