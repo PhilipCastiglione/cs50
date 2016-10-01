@@ -16,20 +16,18 @@ void check_args(int argc, char* argv[]);
 FILE* fopen_safely(char* path, char* mode);
 void confirm_infile_format(BFHEADER* bf_header, BIHEADER* bi_header);
 void adj_headers(BFHEADER* bf_header, BIHEADER* bi_header, double factor, int padding, int new_padding);
+void populate_original_bmp(RGBTRIPLE original_bmp[], BIHEADER bi_header, FILE* inptr, int padding);
 
 int main(int argc, char* argv[])
 {
     check_args(argc, argv);
 
     double factor = atof(argv[1]);
-    char* infile = argv[2];
-    char* outfile = argv[3];
+    FILE* inptr = fopen_safely(argv[2], "r");
+    FILE* outptr = fopen_safely(argv[3], "w");
+
     BFHEADER bf_header;
     BIHEADER bi_header;
-
-    FILE* inptr = fopen_safely(infile, "r");
-    FILE* outptr = fopen_safely(outfile, "w");
-
     fread(&bf_header, sizeof(BFHEADER), 1, inptr);
     fread(&bi_header, sizeof(BIHEADER), 1, inptr);
 
@@ -45,56 +43,14 @@ int main(int argc, char* argv[])
     fwrite(&bf_header, sizeof(BFHEADER), 1, outptr);
     fwrite(&bi_header, sizeof(BIHEADER), 1, outptr);
 
-    // TODO: FROM HERE; WE NOW NEED FLOATYTHINGS ROUNDED LOL
-    // READ THE ORIGINAL BMP CONTENT INTO AN ARRAY
-    
-    // iterate over infile's scanlines
-    for (int i = 0, biHeight = abs(bi_header.biHeight) / factor; i < biHeight; i++)
-    {
-        // then, for each scanline, factor times
-        for (int j = 0; j < factor; j++)
-        {
-            // iterate over pixels in scanline
-            for (int k = 0, biWidth = bi_header.biWidth / factor; k < biWidth; k++)
-            {
-                // temporary storage
-                RGBTRIPLE triple;
-    
-                // read RGB triple from infile
-                fread(&triple, sizeof(RGBTRIPLE), 1, inptr);
-    
-                // write RGB triple to outfile, factor times
-                for (int l = 0; l < factor; l++)
-                {
-                    fwrite(&triple, sizeof(RGBTRIPLE), 1, outptr);
-                }
-            }
-    
-            // skip over padding, if any
-            fseek(inptr, padding, SEEK_CUR);
-    
-            // then add the new_padding required
-            for (int k = 0; k < new_padding; k++)
-            {
-                fputc(0x00, outptr);
-            }
-            
-            // seek back to the infiles start of the scanline, except on the
-            // last run through for that line
-            if (j != factor - 1)
-            {
-                fseek(inptr, -(bi_header.biWidth * 3 / factor + padding), SEEK_CUR);
-            }
-        }
-    }
+    RGBTRIPLE original_bmp[bi_header.biSizeImage / 3];
+    populate_original_bmp(original_bmp, bi_header, inptr, padding);
 
-    // close infile
+    // different approaches for enlarge and reduce
+
     fclose(inptr);
-
-    // close outfile
     fclose(outptr);
 
-    // that's all folks
     return 0;
 }
 
@@ -161,4 +117,16 @@ void adj_headers(BFHEADER* bf_header, BIHEADER* bi_header, double factor, int pa
     
     // calculate the biSizeImage of the file for the BIHEADER
     bi_header->biSizeImage = bf_header->bfSize - 54;
+}
+
+void populate_original_bmp(RGBTRIPLE original_bmp[], BIHEADER bi_header, FILE* inptr, int padding)
+{
+    for (int i = 0, biHeight = abs(bi_header.biHeight); i < biHeight; i++)
+    {
+        for (int j = 0, biWidth = bi_header.biWidth; j < biWidth; j++)
+        {
+            fread(&original_bmp[i * biWidth + j], sizeof(RGBTRIPLE), 1, inptr);
+        }
+        fseek(inptr, padding, SEEK_CUR);
+    }
 }
