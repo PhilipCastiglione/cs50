@@ -157,7 +157,11 @@ void populate_original_bmp(RGBTRIPLE original_bmp[], BIHEADER* bi_header, FILE* 
  */
 void create_reduced(RGBTRIPLE original_bmp[], FILE* outptr, BIHEADER* bi_header, int padding, double factor)
 {
-    int inverse_factor = (int) floor(1.0 / factor);
+    int inverse_factor = (int) round(1.0 / factor);
+    //int inverse_factor = (int) floor(1.0 / factor);
+    printf("factor: %f\n", factor);
+    printf("1.0 / factor: %f\n", 1.0 / factor);
+    printf("inverse factor: %d\n", inverse_factor);
     for (int i = 0, biHeight = abs(bi_header->biHeight); i < biHeight; i++)
     {
         for (int j = 0; j < bi_header->biWidth; j++)
