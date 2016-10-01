@@ -16,7 +16,8 @@ void check_args(int argc, char* argv[]);
 FILE* fopen_safely(char* path, char* mode);
 void confirm_infile_format(BFHEADER* bf_header, BIHEADER* bi_header);
 void adj_headers(BFHEADER* bf_header, BIHEADER* bi_header, double factor, int padding, int new_padding);
-void populate_original_bmp(RGBTRIPLE original_bmp[], BIHEADER bi_header, FILE* inptr, int padding);
+void populate_original_bmp(RGBTRIPLE original_bmp[], BIHEADER* bi_header, FILE* inptr, int padding);
+void create_reduced(RGBTRIPLE original_bmp[], FILE* outptr, BIHEADER* bi_header, int new_padding, double factor);
 
 int main(int argc, char* argv[])
 {
@@ -35,18 +36,25 @@ int main(int argc, char* argv[])
     
     int padding = (4 - (bi_header.biWidth * sizeof(RGBTRIPLE)) % 4) % 4;
     
-    int new_width = (int) floor(bi_header.biWidth * factor) * sizeof(RGBTRIPLE);
+    int new_width = (int) (floor(bi_header.biWidth * factor) || 1) * sizeof(RGBTRIPLE);
     int new_padding = (4 - new_width % 4) % 4;
     
+    RGBTRIPLE original_bmp[bi_header.biSizeImage / 3];
+    populate_original_bmp(original_bmp, &bi_header, inptr, padding);
+
     adj_headers(&bf_header, &bi_header, factor, padding, new_padding);
     
     fwrite(&bf_header, sizeof(BFHEADER), 1, outptr);
     fwrite(&bi_header, sizeof(BIHEADER), 1, outptr);
 
-    RGBTRIPLE original_bmp[bi_header.biSizeImage / 3];
-    populate_original_bmp(original_bmp, bi_header, inptr, padding);
-
-    // different approaches for enlarge and reduce
+    if (factor < 1.0)
+    {
+        create_reduced(original_bmp, outptr, &bi_header, new_padding, factor);
+    }
+    else
+    {
+        //create_enlarged(original_bmp, outptr, &bi_header, new_padding);
+    }
 
     fclose(inptr);
     fclose(outptr);
@@ -106,27 +114,55 @@ FILE* fopen_safely(char* path, char* mode)
  */
 void adj_headers(BFHEADER* bf_header, BIHEADER* bi_header, double factor, int padding, int new_padding)
 {
-    // calculate the biWidth of the file for the BIHEADER
-    bi_header->biWidth = (int) floor(bi_header->biWidth * factor);
-    
-    // calculate the biHeight of the file for the BIHEADER
-    bi_header->biHeight = (int) floor(bi_header->biHeight * factor);
-    
-    // calculate the bfSize of the file for the BFHEADER
+    bi_header->biWidth = (int) floor(bi_header->biWidth * factor) || 1;
+    bi_header->biHeight = (int) floor(bi_header->biHeight * factor) || 1;
     bf_header->bfSize = 54 + (bi_header->biWidth * 3 + new_padding) * abs(bi_header->biHeight);
-    
-    // calculate the biSizeImage of the file for the BIHEADER
     bi_header->biSizeImage = bf_header->bfSize - 54;
 }
 
-void populate_original_bmp(RGBTRIPLE original_bmp[], BIHEADER bi_header, FILE* inptr, int padding)
+/**
+ * Populate the supplied array with the RGBTRIPLEs from the original image.
+ */
+void populate_original_bmp(RGBTRIPLE original_bmp[], BIHEADER* bi_header, FILE* inptr, int padding)
 {
-    for (int i = 0, biHeight = abs(bi_header.biHeight); i < biHeight; i++)
+    for (int i = 0, biHeight = abs(bi_header->biHeight); i < biHeight; i++)
     {
-        for (int j = 0, biWidth = bi_header.biWidth; j < biWidth; j++)
+        for (int j = 0, biWidth = bi_header->biWidth; j < biWidth; j++)
         {
             fread(&original_bmp[i * biWidth + j], sizeof(RGBTRIPLE), 1, inptr);
         }
         fseek(inptr, padding, SEEK_CUR);
     }
 }
+
+/**
+ * Produce an outfile reduced by the factor.
+ */
+void create_reduced(RGBTRIPLE original_bmp[], FILE* outptr, BIHEADER* bi_header, int new_padding, double factor)
+{
+    int inverse_factor = (int) floor(1.0 / factor);
+    for (int i = 0, biHeight = abs(bi_header->biHeight); i < biHeight; i++)
+    {
+        for (int j = 0; j < bi_header->biWidth; j++)
+        {
+            printf("new pixel position: %d, %d\n", i, j);
+            printf("this pixel will be the average of:\n");
+            for (int k = 0; k < inverse_factor; k++)
+            {
+                for (int l = 0; l < inverse_factor; l++)
+                {
+                    int row = i * inverse_factor + k;
+                    int col = j * inverse_factor + l;
+                    int pos = row * inverse_factor * bi_header->biWidth + col;
+                    printf("old pixel position: %d, %d, %d", row, col, pos);
+                    printf(" RGB %d ", original_bmp[pos].rgbtRed);
+                    printf("%d ", original_bmp[pos].rgbtGreen);
+                    printf("%d ", original_bmp[pos].rgbtBlue);
+                    printf("\n");
+                }
+            }
+        }
+    }
+}
+
+// bug: when rounding up, we try to get too much information
