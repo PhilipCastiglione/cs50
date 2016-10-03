@@ -1,0 +1,98 @@
+0. What is pneumonoultramicroscopicsilicovolcanoconiosis?
+
+A silly word that happens to be the longest in the dictionary, and provides the
+count for the maximum word length our program considers.
+
+1. According to its man page, what does getrusage do?
+
+"Gets information about resource utilization". This function returns
+information about the system resources used by a process, making it appropriate
+for benchmarking.
+
+2. Per that same man page, how many members are in a variable of type struct
+rusage?
+
+struct timeval ru_utime, struct timeval ru_stime, long ru_maxrss, long ru_ixrss,
+long ru_idrss, long ru_isrss, long ru_minflt, long ru_majflt, long ru_nswap,
+long ru_inblock, long ru_oublock, long ru_msgsnd, long ru_msgrcv,
+long ru_nsignals, long ru_nvcsw, long ru_nivcsw. So, 16.
+
+3. Why do you think we pass before and after by reference (instead of by value)
+to calculate, even though we’re not changing their contents?
+
+before and after are rusage structs. Even though we're only reading them,
+passing the whole thing would necessitate creating a copy of the whole thing on
+the stack, using more resources than necessary.
+
+4. Explain as precisely as possible, in a paragraph or more, how main goes about
+reading words from a file. In other words, convince us that you indeed
+understand how that function’s for loop works.
+
+First, main establishes proper usage and instantiates variables for benchmarking
+and managing file i/o. After setting up state and loading the files, in the for
+loop starting on line 78, the program gets a single character from the text file
+at a time, until the EOF character is hit.
+
+The loop branches conditionally on the following scenarios: we have found an
+alphabetical char (or an apostrophe and we're not just starting a new word), or
+a digit, or we haven't (and the index > 0 meaning we aren't just starting a word
+now).
+
+In the first case, we start or continue building up a word in memory and
+increment the word length var index (unless we exceed the word length limit, in
+which case we proceed through chars until we reach the start of a new word or
+the end of the file).
+
+In the second case, we just proceed through chars until we reach the start of a
+new word or the end of the file.
+
+In the third case, given what we know about the contents of the file, we must
+have just reached the end of a word. In this way, we are reading words from a
+file.
+
+If none of the cases are hit we are in a corner case (such as multiple
+whitespaces) and can continue through the loop without taking action.
+
+5. Why do you think we used fgetc to read each word’s characters one at a time
+rather than use fscanf with a format string like "%s" to read whole words at a
+time? Put another way, what problems might arise by relying on fscanf alone?
+
+fscanf grabs a string no matter what characters are in it. We want to be able to
+differentiate digits and characters that aren't chars or apostrophes. Checking
+every word to see if it contains digits (for example) after scanning it in
+would increase overhead by comparison.
+
+6. Why do you think we declared the parameters for check and load as const?
+
+Declaring the params as constants ensures they're not mutated in the destination
+function. This makes it slightly more likely that the comparison is accurate by
+ensuring the params integrity is maintained. This also signals to users of the
+function that the params should not be mutated.
+
+7. What data structure(s) did you use to implement your spell-checker? Be sure
+not to leave your answer at just "hash table," "trie," or the like. Expound on
+what’s inside each of your "nodes."
+
+A recursive trie structure, where each node contains the boolean is_word, used
+to delineate a complete word, and an array of (pointers to) 27 new nodes, one
+for each letter and one for an apostrophe.
+
+8. How slow was your code the first time you got it working correctly?
+
+I developed the original data structure and program design before implementation
+so the first implementation was only around 30% slower than the final/current
+version.
+
+9. What kinds of changes, if any, did you make to your code in order to improve
+its performance?
+
+Removed redundant branches, refactored conditionals and functions to try and
+have more common branches earlier and use early exit clauses.
+
+10. Do you feel that your code has any bottlenecks that you were not able to
+chip away at?
+
+Losing a lot of the codes "niceness" would probably make it faster. Using big
+nastry loops instead of recursion, not doing all the safety checks (ie checking
+for null pointers, not returning through the recursive deload to catch errors)
+would definitely make it faster. Multithreading would be sweet.
