@@ -4,3 +4,5 @@
 **/*.bmp
 **/*.jpg
 **/texts/*.txt
+proj/*.mov
+proj/archive/**
